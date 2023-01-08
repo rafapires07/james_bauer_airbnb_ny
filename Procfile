@@ -1,1 +1,0 @@
-web: sh setup.sh && streamlit run streamlit_airbnb_2019_dashboard.py
