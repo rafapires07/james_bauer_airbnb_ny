@@ -358,9 +358,6 @@ def pages(df_analise, geodata):
                      "adição de South Slope, que figura no top 5 bairros ccom maior média de reviews e no Top 3 dos "
                      "com melhor rentabilidade média.")
 
-        a5 = df_analise[['neighbourhood', 'number_of_reviews']]
-        create_sns_bargraph_mean(a5, 'neighbourhood', 'number_of_reviews', 'Brooklyn - Bairro x Número de Reviews')
-
 
 if __name__ == '__main__':
     path = 'AB_NYC_2019.csv'
