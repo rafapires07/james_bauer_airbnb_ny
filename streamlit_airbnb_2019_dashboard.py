@@ -60,26 +60,6 @@ def create_px_bargraph(df, x, y, color, title, text, unit1, unit2):
     return None
 
 
-def point_map(df):
-    houses = df[
-        ['id', 'latitude', 'longitude', 'price', 'rentability', 'number_of_reviews', 'availability_365', 'room_type']]
-    fig = px.scatter_mapbox(data_frame=houses, lat='latitude', lon='longitude', color='room_type', text=None,
-                            hover_name=None,
-                            hover_data={'room_type': True, 'rentability': True, 'latitude': False, 'longitude': False,
-                                        'number_of_reviews': True, },
-                            custom_data=None, size='number_of_reviews', animation_frame=None, animation_group=None,
-                            category_orders=None,
-                            labels={'room_type': 'Tipo de imóvel', 'number_of_reviews': 'N° de Reviews',
-                                    'rentability': 'Rentabilidade'}, color_discrete_sequence=None,
-                            color_discrete_map=None, color_continuous_scale=None,
-                            range_color=None, color_continuous_midpoint=None, opacity=None, size_max=15, zoom=10,
-                            center=None,
-                            mapbox_style='open-street-map', title='AB_NYC_2019', template=None, width=None, height=600)
-    fig.update_layout(margin={'r': 0, 't': 0, 'l': 0, 'b': 0})
-    fig.show()
-    return None
-
-
 def create_px_catplot(df, x, y, col, kind, xlabel):
     sns.set(rc={'axes.facecolor': 'black',
                 'figure.facecolor': 'black',
@@ -145,14 +125,15 @@ def pages(df_analise, geodata):
             loque imóveis na cidade.''')
 
         st.markdown('''Como planeja-se inicialmente locar os imóveis adquiridos, ele definiu que irá utilizar a 
-            plataforma Airbnb para esse fim. Para realizar o estudo foi fornecida a base de dados referente aos imóveis 
-            da Airbnb em Nova York em 2019. O estudo tem como objetivo a escolha das regiões onde há maior locação, 
-            maiores preços, maior rentabilidade, e que fiquem em regiões favoráveis da cidade de Nova York, 
-            pois ele acredita que essas características irão ajudá-lo a recuperar o dinheiro investido na aquisição 
-            desses imóveis mais rapidamente.''')
+        plataforma Airbnb para esse fim. Para realizar o estudo foi fornecida a base de dados referente aos imóveis 
+        da Airbnb em Nova York em 2019. O estudo tem como objetivo a escolha das regiões onde há maior locação, 
+        maiores preços e maior rentabilidade da cidade de Nova York, pois ele acredita que essas características irão 
+        ajudá-lo a recuperar o dinheiro investido na aquisição desses imóveis mais rapidamente.''')
+
         st.markdown('---')
         st.title('Qual o valor em R$ gerado por este projeto?')
-        st.markdown('Infelizmente devido a base de dados não possuir os valores dos imóveis,não é possivel estimar com precisão o retorno gerado.')
+        st.markdown('Infelizmente devido a base de dados não possuir os valores dos imóveis,não é possivel estimar '
+                    'com precisão o retorno gerado.')
         st.markdown('Entretando o tempo de retorno do investimento poderia ser calculado com a fórmula abaixo:')
         st.markdown(
             r'''
@@ -164,7 +145,21 @@ def pages(df_analise, geodata):
         st.title('Visualização dos Dados')
         st.markdown('Clicando no cabeçalho de cada coluna, é possível ordenar os dados de forma ascendente ou '
                     'decrescente')
-        st.write(df_analise)
+
+        # Seleção de Mapas
+        st.sidebar.markdown('Selecione os mapas desejados:')
+        is_check = st.sidebar.checkbox('Mapa - Imóveis por tipo')
+        is_check2 = st.sidebar.checkbox('Mapa de Calor - Rentabilidade Média')
+
+        # Filters
+        f_price = st.sidebar.slider('Selecione a faixa de Preço desejada', min_value=int(df_analise['price'].min()),
+                                    max_value=int(df_analise['price'].max()), value=int(df_analise['price'].max()))
+        f_roomtype = st.sidebar.multiselect('Selecione o tipo de  imóvel',
+                                            sorted(set(df_analise['room_type'].unique())))
+        if not f_roomtype:
+            f_roomtype = df_analise['room_type'].unique()
+
+        st.write(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)])
         st.markdown('A feature **Rentability** foi obtida através dos dados com a seguinte fórmula: ')
         st.markdown(
             r'''
@@ -175,9 +170,8 @@ def pages(df_analise, geodata):
         st.markdown('Selecione o Mapa que deseja visualizar na barra ao lado')
 
         c1, c2 = st.columns(2)
-        st.sidebar.markdown('Selecione os mapas desejados:')
+
         # Mapa 1
-        is_check = st.sidebar.checkbox('Mapa - Imóveis por tipo')
         if is_check:
             with c1:
                 st.header('Mapa - Imóveis por tipo')
@@ -202,7 +196,7 @@ def pages(df_analise, geodata):
             fig.update_layout(margin={'r': 0, 't': 0, 'l': 0, 'b': 0})
             c1.plotly_chart(fig)
 
-        is_check2 = st.sidebar.checkbox('Mapa de Calor - Rentabilidade Média')
+        # Mapa 2
         if is_check2:
             with c2:
                 st.header('Mapa de Calor - Rentabilidade Média')
@@ -224,18 +218,6 @@ def pages(df_analise, geodata):
                 legend_name='AVG RENTABILITY').add_to(m)
             with c2:
                 folium_static(m)
-        # Filters
-        f_neighbourhood = st.sidebar.multiselect('Selecione os Bairros Desejados',
-                                                 sorted(set(df_analise['neighbourhood'].unique())))
-        f_price = st.sidebar.slider('Selecione a faixa de Preço desejada', min_value=int(df_analise['price'].min()),
-                                    max_value=int(df_analise['price'].max()), value=int(df_analise['price'].max()))
-        f_roomtype = st.sidebar.multiselect('Selecione o tipo de  imóvel',
-                                            sorted(set(df_analise['room_type'].unique())))
-        if not f_neighbourhood:
-            f_neighbourhood = df_analise['neighbourhood'].unique()
-
-        if not f_roomtype:
-            f_roomtype = df_analise['room_type'].unique()
 
         st.markdown('---')
         st.subheader('Análises Gráficas')
@@ -243,32 +225,36 @@ def pages(df_analise, geodata):
         c1, c2 = st.columns(2)
 
         with c1:
-            create_px_bargraph(df_analise[df_analise['price'] <= f_price &
-                                          df_analise['neighbourhood'].isin(f_neighbourhood) &
-                                          df_analise['room_type'].isin(f_roomtype)], "neighbourhood_group",
-                               "availability_365", 'neighbourhood_group',
-                               'Média de Disponibilidade x Regiões', 'availability_365', '', " Days")
+            create_px_bargraph(
+                df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+                "neighbourhood_group", "availability_365", 'neighbourhood_group',
+                'Média de Disponibilidade x Regiões', 'availability_365', '', " Days")
+
         with c2:
-            create_px_bargraph(df_analise[df_analise['neighbourhood'].isin(f_neighbourhood) &
-                                          df_analise['price'] <= f_price &
-                                          df_analise['room_type'].isin(f_roomtype)], "neighbourhood_group", "price",
-                               'neighbourhood_group',
-                               'Média de Preço x Regiões', 'price', '$ ', "")
+            create_px_bargraph(
+                df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+                "neighbourhood_group", "price",
+                'neighbourhood_group', 'Média de Preço x Regiões', 'price', '$ ', "")
 
-        create_sns_bargraph_mean(df_analise[df_analise['neighbourhood'].isin(f_neighbourhood) &
-                                            df_analise['price'] <= f_price &
-                                            df_analise['room_type'].isin(f_roomtype)],
-                                 'neighbourhood',
-                                 'rentability', "Neighbourhood vs Rentability Mean")
-        create_sns_bargraph_sum(df_analise[df_analise['neighbourhood'].isin(f_neighbourhood) &
-                                           df_analise['price'] <= f_price &
-                                           df_analise['room_type'].isin(f_roomtype)], 'neighbourhood',
-                                'number_of_reviews', "Neighbourhood vs Number os Reviews Sum")
+        create_sns_bargraph_mean(
+            df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+            'neighbourhood', 'rentability', "Bairro vs Rentabilidade Média")
 
+        create_sns_bargraph_mean(
+            df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+            'neighbourhood', 'number_of_reviews', "Bairro vs Média do Número de Reviews")
+        st.markdown('---')
+        st.subheader("Rentabilidade por tipo de Imóvel e Região")
         create_px_catplot(data, "neighbourhood_group", "price", "room_type", "bar", "Rentability")
+        st.markdown('---')
+        st.subheader("Preço por tipo de Imóvel e Região")
         create_px_catplot(data, "neighbourhood_group", "price", "room_type", "bar", "Price ($)")
+        st.markdown('---')
+        st.subheader("Número de Reviews por tipo de Imóvel e Região")
         create_px_catplot(data, "neighbourhood_group", "number_of_reviews", "room_type", "bar",
                           "Number of Reviews")
+        st.markdown('---')
+        st.subheader("Disponibilidade por tipo de Imóvel e Região")
         create_px_catplot(data, "neighbourhood_group", "availability_365", "room_type", "bar", "Availability 365")
 
     if page == "Hipóteses de Negócio":
@@ -296,9 +282,8 @@ def pages(df_analise, geodata):
         fig = plt.figure(figsize=[15, 2])
         sns.barplot(x='neighbourhood_group', y='price', data=g2)
         st.pyplot(fig)
-        st.subheader('Hipótese Falsa: Como podemos ver a hipotese é falsa, na média os alugueis mais baratos são no '
-                     'Bronx. Sendo a média do aluguel de Staten Islande 10% maior que no Bronx.')
-
+        st.subheader('Hipótese Falsa: Como podemos ver a hipotese é falsa, na média os alugueis mais baratos '
+                     'são no Bronx. Sendo a média do aluguel de Staten Island 10% maior que no Bronx.')
         st.markdown('---')
         st.title('Hipótese 3')
         st.markdown('Quanto mais reviews, menos tempo o imóvel ficou dispónivel')
@@ -328,36 +313,53 @@ def pages(df_analise, geodata):
         st.title(
             "Quais são os melhores bairros e tipos de imóveis a serem comprados para termos a maior rentabilidade?")
         st.subheader("Com base na análise dos dados mostrados na página de visualização de dados e nas hipóteses "
-                     "levantadas, vamos elencar as melhores caracteristicas:")
+                     "levantadas, vamos elencar as melhores caracteristicas e a melhor região neste critério:")
         st.markdown("- Região com maior rentabilidade média: **Manhattan**")
         st.markdown("- Região com a menor disponibilidade média: **Brooklyn**")
         st.markdown("- Região com os maiores valores de aluguéis em média: **Manhattan**")
         st.markdown("- Tipo de quarto com maior rentabilidade média: **Entire home/apt**")
-        st.markdown("- Bairro com maior quantidade de reviews:**Bedford-stuyvesant - Brooklyn**")
+        st.markdown("- Bairro com maior média de reviews:**Silver Lake - Staten Island**")
         st.markdown("- Bairro com maior rentabilidade média: **DUMBO - Brooklyn**")
 
         st.markdown("Com base nessas caracteristicas iremos recomendar a compra de imóveis em dois bairros, "
                     "sendo esses **Manhattan** e **Brooklyn**, para aumentar a diversificação e optando "
-                    "preferencialmente pelos tipos de quarto **Entire home/apt**. Abaixo os melhores bairros em cada "
+                    "preferencialmente pelos tipos de imóvel **Entire home/apt**. Abaixo os melhores bairros em cada "
                     "um dos dois Burgos para se adquirir imóveis")
 
         st.markdown('---')
         st.subheader("Manhattan")
+
         a1 = df_analise[['neighbourhood', 'rentability']][(df_analise['neighbourhood_group'] == 'Manhattan') & (
                 df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
-        create_sns_bargraph_mean(a1, 'neighbourhood', 'rentability', 'Manhattan - Neighbourhood x Rentability')
+        create_sns_bargraph_mean(a1, 'neighbourhood', 'rentability', 'Manhattan - Bairro x Rentabilidade')
+
+        a2 = df_analise[['neighbourhood', 'number_of_reviews']][(df_analise['neighbourhood_group'] == 'Manhattan') & (
+                df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
+        create_sns_bargraph_mean(a2, 'neighbourhood', 'number_of_reviews', 'Manhattan - Bairro x Média de Número de '
+                                                                           'Reviews')
+
         st.subheader("Recomendamos a compra de Entire Home/Apt em Manhattan nos bairros Civic Center e Nolita. Com a "
-                     "adição do Harlem, que figura no top 3 bairros com maior número de reviews e no Top 9 dos com "
+                     "adição do Harlem, que figura no top 3 bairros com maior média de reviews e no Top 9 dos com "
                      "melhor rentabilidade média.")
 
         st.markdown('---')
         st.subheader("Brooklyn")
-        a2 = df_analise[['neighbourhood', 'rentability']][(df_analise['neighbourhood_group'] == 'Brooklyn') & (
+
+        a3 = df_analise[['neighbourhood', 'rentability']][(df_analise['neighbourhood_group'] == 'Brooklyn') & (
                 df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
-        create_sns_bargraph_mean(a2, 'neighbourhood', 'rentability', 'Brooklyn - Neighbourhood x Rentability')
+        create_sns_bargraph_mean(a3, 'neighbourhood', 'rentability', 'Brooklyn - Bairro x Rentabilidade')
+
+        a4 = df_analise[['neighbourhood', 'number_of_reviews']][(df_analise['neighbourhood_group'] == 'Brooklyn') & (
+                df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
+        create_sns_bargraph_mean(a4, 'neighbourhood', 'number_of_reviews', 'Brooklyn - Bairro x Média de Número de '
+                                                                           'Reviews')
+
         st.subheader("Recomendamos a compra de Entire Home/Apt em Brooklyn nos bairros DUMBO e Park Slope. Com a "
-                     "adição de Williamsburg, que figura no top 2 bairros com maior número de reviews e no Top 8 dos "
+                     "adição de South Slope, que figura no top 5 bairros ccom maior média de reviews e no Top 3 dos "
                      "com melhor rentabilidade média.")
+
+        a5 = df_analise[['neighbourhood', 'number_of_reviews']]
+        create_sns_bargraph_mean(a5, 'neighbourhood', 'number_of_reviews', 'Brooklyn - Bairro x Número de Reviews')
 
 
 if __name__ == '__main__':
