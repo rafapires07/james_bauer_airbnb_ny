@@ -19,20 +19,17 @@ Como planeja-se inicialmente locar os imóveis adquiridos, ele definiu que irá 
 Para a execução deste projeto algumas premissas foram adotadas, sendo elas:
 
 *Foram retirados os imóveis com rentabilidade maior que 29794.06, uma vez que estaremos considerando que esses imóveis possuem características muito específicas e que seriam difíceis ou impossíveis de replicar, atrapalhando a análise dos melhores bairros e tipo de imóveis a serem comprados.
-*Foi Adotada a seguinte fórmula para o cálculo da rentabilidade: 
-$$
-   f(x,y) = \sin(x+y)
-$$
+*Foram adotadas fórmulas para o calculo de rentabilidade e de tempo de retorno do investimento (As fórmulas são mostradas no dashboard Web)
 
-## 6. Resultado financeiro
+##  Resultado financeiro
 
-O objetivo desse projeto é fornecer uma lista de imóveis com opções de compra e venda, para obtenção do __lucro máximo__ que poderá ser obtido se todas as sugestões ocorrerem. O resultado financeiro apresentado representa o lucro máximo que pode ser obtido utilizando as recomendações informadas.
-
-| __Número de imóveis__ | __Custo total__ | __Receita de vendas__ | __Lucro (profit)__ |
-| ----------------- | ----------------- | ----------------- | ----------------- |
-| 10.642 | R$ 4.079.586.744,00 | R$ 4.766.745.551,20 | R$ 687.158.807,20 |
+Infelizmente devido a base de dados não possuir os valores dos imóveis,não é possivel estimar com precisão o retorno gerado. Porém foi incluida uma fórmula no dashboard para saber o tempo de retorno do investimento.
 
 
-## 6. Conclusão
+## Conclusão
 
 O objetivo deste projeto é prover para o time de negócio informações suficientes para uma melhor tomada de decisões. Sendo assim, este projeto cumpriu sua função.
+
+## Próximos Passos
+
+Os próximos passos desse projeto seria conseguir obter os valores dos imóveis para que a escolha dos bairros e tipos de imóveis a serem comprados sejam mais acertivas e obtenham o menor tempo de retorno de investimento.
