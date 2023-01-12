@@ -342,7 +342,7 @@ def pages(df_analise, geodata):
                                                                            'Reviews')
 
         st.subheader("Recomendamos a compra de Entire Home/Apt em Manhattan nos bairros Civic Center e Nolita. Com a "
-                     "adição do Harlem, que figura no top 3 bairros com maior média de reviews e no Top 9 dos com "
+                     "adição do Harlem, que figura no top 2 bairros com maior média de reviews e no Top 9 dos com "
                      "melhor rentabilidade média.")
 
         st.markdown('---')
