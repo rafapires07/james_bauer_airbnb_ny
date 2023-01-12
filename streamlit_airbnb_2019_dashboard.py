@@ -245,17 +245,20 @@ def pages(df_analise, geodata):
             'neighbourhood', 'number_of_reviews', "Bairro vs Média do Número de Reviews")
         st.markdown('---')
         st.subheader("Rentabilidade por tipo de Imóvel e Região")
-        create_px_catplot(data, "neighbourhood_group", "price", "room_type", "bar", "Rentability")
+        create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+                          "neighbourhood_group", "price", "room_type", "bar", "Rentability")
         st.markdown('---')
         st.subheader("Preço por tipo de Imóvel e Região")
-        create_px_catplot(data, "neighbourhood_group", "price", "room_type", "bar", "Price ($)")
+        create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+                          "neighbourhood_group", "price", "room_type", "bar", "Price ($)")
         st.markdown('---')
         st.subheader("Número de Reviews por tipo de Imóvel e Região")
-        create_px_catplot(data, "neighbourhood_group", "number_of_reviews", "room_type", "bar",
-                          "Number of Reviews")
+        create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+                          "neighbourhood_group", "number_of_reviews", "room_type", "bar","Number of Reviews")
         st.markdown('---')
         st.subheader("Disponibilidade por tipo de Imóvel e Região")
-        create_px_catplot(data, "neighbourhood_group", "availability_365", "room_type", "bar", "Availability 365")
+        create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
+                          "neighbourhood_group", "availability_365", "room_type", "bar", "Availability 365")
 
     if page == "Hipóteses de Negócio":
         st.title('Hipótese 1')
