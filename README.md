@@ -19,9 +19,10 @@ Como planeja-se inicialmente locar os imóveis adquiridos, ele definiu que irá 
 Para a execução deste projeto algumas premissas foram adotadas, sendo elas:
 
 *Foram retirados os imóveis com rentabilidade maior que 29794.06, uma vez que estaremos considerando que esses imóveis possuem características muito específicas e que seriam difíceis ou impossíveis de replicar, atrapalhando a análise dos melhores bairros e tipo de imóveis a serem comprados.
-r'''
-            $$ 𝑟𝑒𝑛𝑡𝑎𝑏𝑖𝑙𝑖ty = \frac{𝑝𝑟𝑖𝑐𝑒 * (𝑚𝑖𝑛𝑖𝑚𝑢𝑚\_𝑛𝑖𝑔ℎ𝑡𝑠 + 1) *  n𝑢𝑚𝑏𝑒𝑟\_𝑜𝑓\_𝑟𝑒𝑣𝑖𝑒𝑤𝑠}{ \sqrt{𝑎𝑣𝑎𝑖𝑙𝑎𝑏𝑖𝑙𝑖𝑡𝑦_365}} $$)
-            ''')
+*Foi Adotada a seguinte fórmula para o cálculo da rentabilidade: 
+$$
+   f(x,y) = \sin(x+y)
+$$
 
 ## 6. Resultado financeiro
 
