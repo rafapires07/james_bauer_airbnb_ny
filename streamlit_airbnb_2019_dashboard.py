@@ -12,7 +12,7 @@ from streamlit_folium import folium_static
 st.set_page_config(layout='wide')
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def get_df(path):
     df = pd.read_csv(path)
     return df
@@ -46,18 +46,22 @@ def transform_df(df):
     # Retirando dos dados ativos com rentabilidade que foi considerada muito discrepante através da EDA
     df_analise = df_ativos[df_ativos['rentability'] <= 29794.06].copy()
 
+    
+
     return df_analise
 
 
-def create_px_bargraph(df, x, y, color, title, text, unit1, unit2):
+def create_px_bargraph(df, x, y, color, title, text, unit1, unit2, xlabel, ylabel):
     df_graph = df[[x, y]].groupby(by=x).mean().sort_values(by=y).reset_index()
     fig = px.bar(df_graph, x=x, y=y, color=color,
-                 title=title, text=text,
-                 color_discrete_sequence=('PeachPuff', 'cadetblue', 'darkseagreen', 'LightSkyBlue', 'lightcoral'))
+                 title=title, text=text, labels= {x:xlabel, y:ylabel},
+                 color_discrete_map={'Brooklyn':'PeachPuff','Bronx':'cadetblue','Manhattan':'darkseagreen','Queens':'LightSkyBlue','Staten Island':'lightcoral'})
     fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     fig.update_traces(texttemplate=unit1 + '%{text:.3s}' + unit2, textposition='outside')
     st.plotly_chart(fig)
     return None
+
+
 
 
 def create_px_catplot(df, x, y, col, kind, xlabel):
@@ -68,30 +72,36 @@ def create_px_catplot(df, x, y, col, kind, xlabel):
                 'ytick.color': 'white',
                 'axes.labelcolor': 'white'
                 })
+    grouped_df = df[[x, col, y]].groupby(
+                                                [x, col]
+                                            ).mean().reset_index().sort_values(
+                                                [col, y]
+                                            )
     ax1 = sns.catplot(
-        data=df, x=x, y=y, col=col, ci=None,
-        kind=kind)
+        data=grouped_df, x=x, y=y, col=col,
+        sharex=False,kind=kind, hue=x, dodge=False,
+        palette={'Brooklyn':'PeachPuff','Bronx':'cadetblue','Manhattan':'darkseagreen','Queens':'LightSkyBlue','Staten Island':'lightcoral'} )
     ax1.set_axis_labels("", xlabel)
     ax1.set_titles(col_template="{col_name}")
     for ax in ax1.axes.ravel():
         for c in ax.containers:
             ax.bar_label(c, fmt='%1.1f')
-        ax.margins(y=0.2)
+            ax.margins(y=0.2)
     st.pyplot(fig=ax1)
     return None
 
 
 # Criação de Gráfico de Barras por Média
-def create_sns_bargraph_mean(df, x, y, title):
+def create_sns_bargraph_mean(df, x, y, title, xlabel, ylabel):
     df_graph = df[[x, y]].groupby(by=x).mean().sort_values(by=y, ascending=False).head(10).reset_index()
     fig1 = plt.figure(figsize=[15, 3])
-    ax1 = sns.barplot(data=df_graph, x=x, y=y)
-    plt.xlabel(x)
-    plt.ylabel(y)
+    fig1 = sns.barplot(data=df_graph, x=x, y=y)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.title(title)
-    for i in ax1.containers:
-        ax1.bar_label(i, )
-    st.pyplot(fig=ax1.figure)
+    for i in fig1.containers:
+        fig1.bar_label(i, )
+    st.pyplot(fig=fig1.figure)
     return None
 
 
@@ -134,10 +144,10 @@ def pages(df_analise, geodata):
         st.title('Qual o valor em R$ gerado por este projeto?')
         st.markdown('Infelizmente devido a base de dados não possuir os valores dos imóveis,não é possivel estimar '
                     'com precisão o retorno gerado.')
-        st.markdown('Entretando o tempo de retorno do investimento poderia ser calculado com a fórmula abaixo:')
+        st.markdown('Entretando o tempo de retorno do investimento (RI) poderia ser calculado com a fórmula abaixo:')
         st.markdown(
             r'''
-            $$ R𝑒𝑡𝑢𝑟𝑛 I𝑛𝑣𝑒𝑠𝑡𝑚𝑒𝑛𝑡 = \frac{𝑖𝑛𝑣𝑒𝑠𝑡𝑚𝑒𝑛𝑡}{𝑝𝑟𝑖𝑐𝑒 * (𝑚𝑖𝑛𝑖𝑚𝑢𝑚\_𝑛𝑖𝑔ℎ𝑡𝑠 + 1)}  $$)
+            $$ RI  = \frac{investimento}{preco * (estadia\_minima + 1)}  $$)
             ''')
 
     # Visualização dos Dados
@@ -159,11 +169,20 @@ def pages(df_analise, geodata):
         if not f_roomtype:
             f_roomtype = df_analise['room_type'].unique()
 
-        st.write(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)])
-        st.markdown('A feature **Rentability** foi obtida através dos dados com a seguinte fórmula: ')
+        # Criando dataframe para visualizacao
+        df_view = df_analise.copy()
+        df_view.columns = ['id_imovel', 'nome_imovel', 'id_host', 'nome_host','distrito', 'bairro', 'latitude', 'longitude', 'tipo_imovel',
+                            'preco', 'estadia_minima', 'numero_de_reviews','ultimo_review', 'reviews_por_mes', 'qtd_imoveis_mesmo_host', 
+                            'disponibilidade_365', 'rentabilidade']
+        df_view = df_view[['id_imovel', 'nome_imovel', 'id_host', 'nome_host', 'rentabilidade', 'distrito', 'bairro', 'tipo_imovel',  'preco', 
+                            'estadia_minima', 'numero_de_reviews', 'ultimo_review', 'reviews_por_mes', 'qtd_imoveis_mesmo_host', 'disponibilidade_365', 
+                            'latitude', 'longitude']]
+
+        st.write(df_view[(df_view['tipo_imovel'].isin(f_roomtype)) & (df_view['preco'] <= f_price)])
+        st.markdown('A feature **Rentabilidade** foi obtida através dos dados com a seguinte fórmula: ')
         st.markdown(
             r'''
-            $$ 𝑟𝑒𝑛𝑡𝑎𝑏𝑖𝑙𝑖ty = \frac{𝑝𝑟𝑖𝑐𝑒 * (𝑚𝑖𝑛𝑖𝑚𝑢𝑚\_𝑛𝑖𝑔ℎ𝑡𝑠 + 1) *  n𝑢𝑚𝑏𝑒𝑟\_𝑜𝑓\_𝑟𝑒𝑣𝑖𝑒𝑤𝑠}{ \sqrt{𝑎𝑣𝑎𝑖𝑙𝑎𝑏𝑖𝑙𝑖𝑡𝑦_365}} $$)
+            $$ rentabilidade = \frac{preco * (estadia\_minima + 1) *  numero\_de\_𝑟𝑒𝑣𝑖𝑒𝑤𝑠}{ \sqrt{disponibilidade-365}} $$
             ''')
         st.markdown('---')
         st.subheader('Mapas')
@@ -178,7 +197,7 @@ def pages(df_analise, geodata):
             df_map = df_analise[
                 ['id', 'latitude', 'longitude', 'price', 'rentability', 'number_of_reviews', 'availability_365',
                  'room_type']]
-            fig = px.scatter_mapbox(data_frame=df_map, lat='latitude', lon='longitude', color='room_type', text=None,
+            fig = px.scatter_mapbox(data_frame=df_map, lat='latitude', lon='longitude', text=None,
                                     hover_name=None,
                                     hover_data={'room_type': True, 'rentability': True, 'latitude': False,
                                                 'longitude': False, 'number_of_reviews': True, },
@@ -186,9 +205,10 @@ def pages(df_analise, geodata):
                                     animation_group=None,
                                     category_orders=None,
                                     labels={'room_type': 'Tipo de imóvel', 'number_of_reviews': 'N° de Reviews',
-                                            'rentability': 'Rentabilidade'}, color_discrete_sequence=None,
-                                    color_discrete_map=None, color_continuous_scale=None,
-                                    range_color=None, color_continuous_midpoint=None, opacity=None, size_max=15,
+                                            'rentability': 'Rentabilidade'}, 
+                                    color_discrete_sequence=('Crimson','MediumSeaGreen','Gold'),
+                                    color='room_type',
+                                    opacity=None, size_max=15,
                                     zoom=10,
                                     center=None,
                                     mapbox_style='open-street-map', title='AB_NYC_2019', template=None, width=None,
@@ -228,39 +248,41 @@ def pages(df_analise, geodata):
             create_px_bargraph(
                 df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
                 "neighbourhood_group", "availability_365", 'neighbourhood_group',
-                'Média de Disponibilidade x Regiões', 'availability_365', '', " Days")
+                'Média de Disponibilidade x Regiões', 'availability_365', '', " Days", "Região","Disponibilidade 365")
 
         with c2:
             create_px_bargraph(
                 df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
                 "neighbourhood_group", "price",
-                'neighbourhood_group', 'Média de Preço x Regiões', 'price', '$ ', "")
+                'neighbourhood_group', 'Média de Preço x Regiões', 'price', '$ ', "","Região", "Preço")
 
         create_sns_bargraph_mean(
             df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
-            'neighbourhood', 'rentability', "Bairro vs Rentabilidade Média")
+            'neighbourhood', 'rentability', "Bairro vs Rentabilidade Média","Bairro","Rentabilidade")
 
         create_sns_bargraph_mean(
             df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
-            'neighbourhood', 'number_of_reviews', "Bairro vs Média do Número de Reviews")
+            'neighbourhood', 'number_of_reviews', "Bairro vs Média do Número de Reviews","Bairro","Número de Reviews")
         st.markdown('---')
-        st.subheader("Rentabilidade por tipo de Imóvel e Região")
+        st.subheader("Média de Rentabilidade por tipo de Imóvel e Região")
         create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
-                          "neighbourhood_group", "price", "room_type", "bar", "Rentability")
+                          "neighbourhood_group", "rentability", "room_type", "bar", "Rentabilidade")
         st.markdown('---')
-        st.subheader("Preço por tipo de Imóvel e Região")
+        st.subheader("Média de Preço por tipo de Imóvel e Região")
         create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
-                          "neighbourhood_group", "price", "room_type", "bar", "Price ($)")
+                          "neighbourhood_group", "price", "room_type", "bar", "Preço ($)")
         st.markdown('---')
-        st.subheader("Número de Reviews por tipo de Imóvel e Região")
+        st.subheader("Média de Número de Reviews por tipo de Imóvel e Região")
         create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
-                          "neighbourhood_group", "number_of_reviews", "room_type", "bar","Number of Reviews")
+                          "neighbourhood_group", "number_of_reviews", "room_type", "bar","Numbero de Reviews")
         st.markdown('---')
-        st.subheader("Disponibilidade por tipo de Imóvel e Região")
+        st.subheader("Média de Disponibilidade por tipo de Imóvel e Região")
         create_px_catplot(df_analise[(df_analise['room_type'].isin(f_roomtype)) & (df_analise['price'] <= f_price)],
-                          "neighbourhood_group", "availability_365", "room_type", "bar", "Availability 365")
+                          "neighbourhood_group", "availability_365", "room_type", "bar", "Disponibilidade 365")
 
     if page == "Hipóteses de Negócio":
+        new_style = {'grid': False}
+        plt.rc('axes', **new_style)
         st.title('Hipótese 1')
         st.markdown('Em média, os aluguéis mais caros da cidade de Nova York estão nas regiões ao entorno do Central '
                     'Park.')
@@ -271,8 +293,10 @@ def pages(df_analise, geodata):
         st.text('- Upper West Side')
         g1 = df_analise[['neighbourhood', 'price']].groupby(by='neighbourhood'). \
             mean().sort_values(by='price', ascending=False).head(10).reset_index()
-        fig = plt.figure(figsize=[15, 2])
-        sns.barplot(x='neighbourhood', y='price', data=g1)
+        fig = plt.figure(figsize=[15, 4])
+        ax = sns.barplot(x='neighbourhood', y='price', data=g1, errwidth=0)
+    
+        ax.bar_label(ax.containers[0])
         st.pyplot(fig)
         st.subheader('Hipótese Falsa: Como podemos ver a no gráfico acima, na média, os alugueis mais caros são em '
                      'Sea Gate.')
@@ -282,8 +306,9 @@ def pages(df_analise, geodata):
         st.markdown('Staten Island tem em média os aluguéis mais baratos')
         g2 = df_analise[['neighbourhood_group', 'price']].groupby(by='neighbourhood_group').mean().sort_values(
             by='price', ascending=False).reset_index()
-        fig = plt.figure(figsize=[15, 2])
-        sns.barplot(x='neighbourhood_group', y='price', data=g2)
+        fig = plt.figure(figsize=[15, 4])
+        ax2 = sns.barplot(x='neighbourhood_group', y='price', data=g2)
+        ax2.bar_label(ax2.containers[0])
         st.pyplot(fig)
         st.subheader('Hipótese Falsa: Como podemos ver a hipotese é falsa, na média os alugueis mais baratos '
                      'são no Bronx. Sendo a média do aluguel de Staten Island 10% maior que no Bronx.')
@@ -308,6 +333,7 @@ def pages(df_analise, geodata):
                                                                                            ascending=False).reset_index()
         fig = plt.figure(figsize=[15, 2])
         sns.barplot(x='room_type', y='price', data=g5)
+        plt.ylabel("Preço")
         st.pyplot(fig)
         st.subheader('Hipótese Verdadeira: Dos 3 tipos de imóveis, Entire home/apt é o mais caro. Sendo '
                      'aproximadamente 238% mais caro que o segundo colocado, Private Room.')
@@ -334,12 +360,12 @@ def pages(df_analise, geodata):
 
         a1 = df_analise[['neighbourhood', 'rentability']][(df_analise['neighbourhood_group'] == 'Manhattan') & (
                 df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
-        create_sns_bargraph_mean(a1, 'neighbourhood', 'rentability', 'Manhattan - Bairro x Rentabilidade')
+        create_sns_bargraph_mean(a1, 'neighbourhood', 'rentability', 'Manhattan - Bairro x Rentabilidade',"Bairro","Rentabilidade")
 
         a2 = df_analise[['neighbourhood', 'number_of_reviews']][(df_analise['neighbourhood_group'] == 'Manhattan') & (
                 df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
         create_sns_bargraph_mean(a2, 'neighbourhood', 'number_of_reviews', 'Manhattan - Bairro x Média de Número de '
-                                                                           'Reviews')
+                                                                           'Reviews', "Bairro","Número de Reviews")
 
         st.subheader("Recomendamos a compra de Entire Home/Apt em Manhattan nos bairros Civic Center e Nolita. Com a "
                      "adição do Harlem, que figura no top 2 bairros com maior média de reviews e no Top 9 dos com "
@@ -350,15 +376,15 @@ def pages(df_analise, geodata):
 
         a3 = df_analise[['neighbourhood', 'rentability']][(df_analise['neighbourhood_group'] == 'Brooklyn') & (
                 df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
-        create_sns_bargraph_mean(a3, 'neighbourhood', 'rentability', 'Brooklyn - Bairro x Rentabilidade')
+        create_sns_bargraph_mean(a3, 'neighbourhood', 'rentability', 'Brooklyn - Bairro x Rentabilidade',"Bairro", "Rentabilidade")
 
         a4 = df_analise[['neighbourhood', 'number_of_reviews']][(df_analise['neighbourhood_group'] == 'Brooklyn') & (
                 df_analise['room_type'] == 'Entire home/apt')].reset_index(drop=True)
         create_sns_bargraph_mean(a4, 'neighbourhood', 'number_of_reviews', 'Brooklyn - Bairro x Média de Número de '
-                                                                           'Reviews')
+                                                                           'Reviews',"Bairro", "Número de Reviews")
 
         st.subheader("Recomendamos a compra de Entire Home/Apt em Brooklyn nos bairros DUMBO e Park Slope. Com a "
-                     "adição de South Slope, que figura no top 5 bairros ccom maior média de reviews e no Top 3 dos "
+                     "adição de South Slope, que figura no top 5 bairros com maior média de reviews e no Top 3 dos "
                      "com melhor rentabilidade média.")
 
 
